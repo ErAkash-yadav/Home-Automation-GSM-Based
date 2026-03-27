@@ -1,0 +1,66 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial gsm(10,11);
+
+String sms="";
+int relay = 7;
+int relayState = 0;
+
+void setup()
+{
+Serial.begin(9600);
+gsm.begin(9600);
+
+pinMode(relay,OUTPUT);
+digitalWrite(relay,LOW);   // Relay OFF
+
+delay(3000);
+
+gsm.println("AT+CMGF=1");
+delay(1000);
+
+gsm.println("AT+CNMI=2,2,0,0,0");
+delay(1000);
+}
+
+void loop()
+{
+
+while(gsm.available())
+{
+char c = gsm.read();
+sms += c;
+}
+
+if(sms.indexOf("ON") != -1)
+{
+digitalWrite(relay,HIGH);   // Relay ON
+relayState = 1;
+sms="";
+}
+
+if(sms.indexOf("OFF") != -1)
+{
+digitalWrite(relay,LOW);    // Relay OFF
+relayState = 0;
+sms="";
+}
+
+if(sms.indexOf("RING") != -1)
+{
+if(relayState == 0)
+{
+digitalWrite(relay,HIGH);   // Relay ON
+relayState = 1;
+}
+else
+{
+digitalWrite(relay,LOW);    // Relay OFF
+relayState = 0;
+}
+
+gsm.println("ATH");   // Call cut
+sms="";
+}
+
+}
